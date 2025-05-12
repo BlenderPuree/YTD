@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <script src="https://unpkg.com/youtube-dl-exec@2.4.17/dist/browser.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            text-align: center;
+            color: #1a73e8;
+        }
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+        }
+        input, select { 
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button { 
+            padding: 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover { 
+            background: #1557b0;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Downloader</h1>
+        <form id="downloadForm">
+            <input type="text" id="url" placeholder="Enter YouTube URL" required>
+            <select id="format">
+                <option value="mp4">MP4 Video</option>
+                <option value="mp3">MP3 Audio</option>
+            </select>
+            <button type="submit" id="downloadBtn">Download</button>
+        </form>
+        <div id="status" class="status"></div>
+        <div id="loading" class="loading">Processing...</div>
+    </div>
+
+    <script>
+        document.getElementById('downloadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('url').value;
+            const format = document.getElementById('format').value;
+            const status = document.getElementById('status');
+            const loading = document.getElementById('loading');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            // Validate YouTube URL
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+            if (!youtubeRegex.test(url)) {
+                status.textContent = 'Please enter a valid YouTube URL';
+                status.className = 'status error';
+                status.style.display = 'block';
+                return;
+            }
+
+            try {
+                downloadBtn.disabled = true;
+                loading.style.display = 'block';
+                status.style.display = 'none';
+
+                // Use youtube-dl-exec in browser
+                const result = await youtubeDl.exec(url, {
+                    format: format === 'mp3' ? 'bestaudio' : 'best',
+                    extractAudio: format === 'mp3',
+                    audioFormat: 'mp3',
+                    audioQuality: 0,
+                    output: '%(title)s.%(ext)s'
+                });
+
+                // Create download link
+                const link = document.createElement('a');
+                link.href = result.url;
+                link.download = result.filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                status.textContent = 'Download started!';
+                status.className = 'status success';
+                status.style.display = 'block';
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                status.className = 'status error';
+                status.style.display = 'block';
+            } finally {
+                downloadBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
